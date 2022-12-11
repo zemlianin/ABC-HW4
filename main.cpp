@@ -5,6 +5,7 @@
 #include <semaphore.h>
 #include <fstream>
 #include<windows.h>
+#include<chrono>
 #include<unistd.h>
 sem_t semaphore0;
 sem_t semaphore1;
@@ -15,8 +16,9 @@ sem_t semaphore5;
 bool flagInOut;
 std::ofstream outf;
 std::ifstream inf;
-pthread_mutex_t mutex;
 
+// 5 картин, на которых, посетитель за счет семафоров ожидает снижения числа зрителей до 10 ,
+// задерживается на некоторое время и затем отходит от картины
 void Review1() {
     sem_wait(&semaphore1);
     sleep(1000);
@@ -51,13 +53,9 @@ void out(std::string s) {
     if (flagInOut) {
         std::cout << s;
     } else {
-       // std::ofstream outf;
-      //  pthread_mutex_lock(&mutex);
-
         if (outf.is_open()) {
             outf << s;
         }
-      //  pthread_mutex_unlock(&mutex);
     }
 }
 
@@ -82,6 +80,7 @@ public:
 
     Visitor(int id) {
         this->id = id;
+        // У каждого посетителя есть суой поток, он будет действоать независимо
         thread = pthread_t();
     }
 
@@ -93,10 +92,12 @@ public:
 void *Gallery(void *arg) {
     int idVis = *((int *) (arg));
     srand(idVis);
+    // Посетители пытаются попасть в зал с картинами, но стоит симофор с лиитом в 50 человек
     sem_wait(&semaphore0);
     out(std::to_string(idVis) + " in Gallery\n");
     bool isFinish = false;
     while (!isFinish) {
+        // Посетитель принимает решение, пройти к какой либо картине или уйти из галлереи
         int choice = (rand()) % 6;
         switch (choice) {
             case 0:
@@ -125,13 +126,26 @@ void *Gallery(void *arg) {
         }
     }
     sem_post(&semaphore0);
+    // Выход из галлереи
     out(std::to_string(idVis) + " exit from Gallery\n");
 }
 
 int main(int argc, char *argv[]) {
+    /*Условие задачи:
+    17. Задача о картинной галерее.
+    Вахтер следит за тем, чтобы в картинной
+    галерее одновременно было не более 50 посетителей. Для обозрения представлены
+    5 картин. Посетитель ходит от картины к картине, и если на картину любуются более
+    чем десять посетителей, он стоит в стороне и ждет, пока
+    число желающих увидеть картину не станет меньше. Посетитель может покинуть галерею. В
+    галерею также пытаются постоянно зайти новые посетители, которые ожидают своей очереди,
+    если та заполнена. Создать многопоточное приложение,
+    моделирующее однодневную работу картинной галереи.*/
+
     std::vector<Visitor> visitors;
     outf.open("output.txt");
     inf.open("input.txt");
+    // Дефолтное значение числа зрителей
     int number_of_vesitors = 70;
     int command;
     std::cout << "Input case of input and output\n1.From/to File\n2.From/to Console\n";
@@ -141,15 +155,21 @@ int main(int argc, char *argv[]) {
     } else {
         flagInOut = true;
     }
-    std::cout << "Select numbers of vesitors\n1. Input numbers of vesitors\n2. Use arguments of command line";
+    std::cout << "Select numbers of vesitors\n1. Input numbers of vesitors\n2. Use arguments of command line"
+                 "\n3. Use Random\n ";
     std::cin >> command;
     if (command == 1) {
         number_of_vesitors = std::stoi(in());
-    } else {
+    } else if(command == 2) {
         if (argc == 2) {
             number_of_vesitors = std::stoi(argv[1]);
         }
+    } else{
+        srand( std::chrono::system_clock::now().time_since_epoch().count());
+        number_of_vesitors = rand()%100;
+        std::cout<<std::to_string(number_of_vesitors)+"\n";
     }
+    // Инициализация симофоров
     sem_init(&semaphore0, 0, 50);
     sem_init(&semaphore1, 0, 10);
     sem_init(&semaphore2, 0, 10);
@@ -158,9 +178,11 @@ int main(int argc, char *argv[]) {
     sem_init(&semaphore5, 0, 10);
     for (int i = 0; i < number_of_vesitors; ++i) {
         visitors.push_back(Visitor(i));
+        // У галлереи появляются посетители
         visitors[i].Action(Gallery);
     }
     for (int i = 0; i < number_of_vesitors; ++i) {
+        // Ожидание завершения просмотра для всех посетителей
         pthread_join(visitors[i].thread, NULL);
     }
 
