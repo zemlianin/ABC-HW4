@@ -1,0 +1,3 @@
+C:/Users/813544/CLionProjects/Gallery/cmake-build-debug/CMakeFiles/untitled90.dir
+C:/Users/813544/CLionProjects/Gallery/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/813544/CLionProjects/Gallery/cmake-build-debug/CMakeFiles/rebuild_cache.dir
