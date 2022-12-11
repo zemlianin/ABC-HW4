@@ -4,9 +4,26 @@
 #include "stdlib.h"
 #include <semaphore.h>
 #include <fstream>
-#include<windows.h>
+
 #include<chrono>
-#include<unistd.h>
+
+#ifdef _WIN32
+
+#include <windows.h>
+
+void sleep(unsigned milliseconds) {
+    Sleep(milliseconds);
+}
+
+#else
+#include <unistd.h>
+
+void sleep(unsigned milliseconds)
+{
+    usleep(milliseconds * 1000); // takes microseconds
+}
+#endif
+
 sem_t semaphore0;
 sem_t semaphore1;
 sem_t semaphore2;
@@ -21,31 +38,31 @@ std::ifstream inf;
 // задерживается на некоторое время и затем отходит от картины
 void Review1() {
     sem_wait(&semaphore1);
-    sleep(1000);
+    sleep(100);
     sem_post(&semaphore1);
 }
 
 void Review2() {
     sem_wait(&semaphore2);
-    sleep(1000);
+    sleep(100);
     sem_post(&semaphore2);
 }
 
 void Review3() {
     sem_wait(&semaphore3);
-    sleep(1000);
+    sleep(100);
     sem_post(&semaphore3);
 }
 
 void Review4() {
     sem_wait(&semaphore4);
-    sleep(1000);
+    sleep(100);
     sem_post(&semaphore4);
 }
 
 void Review5() {
     sem_wait(&semaphore5);
-    sleep(1000);
+    sleep(100);
     sem_post(&semaphore5);
 }
 
@@ -160,14 +177,14 @@ int main(int argc, char *argv[]) {
     std::cin >> command;
     if (command == 1) {
         number_of_vesitors = std::stoi(in());
-    } else if(command == 2) {
+    } else if (command == 2) {
         if (argc == 2) {
             number_of_vesitors = std::stoi(argv[1]);
         }
-    } else{
-        srand( std::chrono::system_clock::now().time_since_epoch().count());
-        number_of_vesitors = rand()%100;
-        std::cout<<std::to_string(number_of_vesitors)+"\n";
+    } else {
+        srand(std::chrono::system_clock::now().time_since_epoch().count());
+        number_of_vesitors = rand() % 100+200;
+        std::cout << std::to_string(number_of_vesitors) + "\n";
     }
     // Инициализация симофоров
     sem_init(&semaphore0, 0, 50);
